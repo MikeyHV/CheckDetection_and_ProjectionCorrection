@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/differentModelTutorials/detectron2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/differentModelTutorials/detectron2_3" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/differentModelTutorials/hands-segmentation-pytorch" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/differentModelTutorials/handwriting-ocr" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/differentModelTutorials/hed-edge-detector" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/differentModelTutorials/image-segmentation-keras" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/differentModelTutorials/opencvedgedetection/hed" vcs="Git" />
+  </component>
+</project>
