@@ -13,10 +13,6 @@ import re
 import numpy as np
 import math
 
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-from PIL import Image
-
 import detectron2
 from detectron2.utils.logger import setup_logger
 setup_logger()
@@ -25,14 +21,6 @@ import imutils
 import numpy as np
 import os, json, random
 import cv2 as cv
-import matplotlib.pyplot as plt
-
-# import some common detectron2 utilities
-from detectron2 import model_zoo
-from detectron2.engine import DefaultPredictor
-from detectron2.config import get_cfg
-from detectron2.utils.visualizer import Visualizer
-from detectron2.data import MetadataCatalog, DatasetCatalog
 
 #pip install pyyaml==5.1
 
@@ -89,53 +77,47 @@ def getAppxCorner(img_dilation):
                 approxCorners = np.delete(approxCorners, shortestPair[1], axis=0)
     return approxCorners
 
-def returnCheck(image):
-    imagec = proj3Helper.histeq(image)
 
-    cfg = get_cfg()
-    cfg.MODEL.DEVICE = 'cpu'
-    # add project-specific config (e.g., TensorMask) here if you're not running a model in detectron2's core library
-    cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
-    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # set threshold for this model
-    # Find a model from detectron2's model zoo. You can use the https://dl.fbaipublicfiles... url as well
-    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
-    predictor = DefaultPredictor(cfg)
-
-    outputs = predictor(imagec)
-
-    peopleMasks = []
-    bookMasks = []
-    isABookMask = False
-    temp = outputs["instances"]
-    finalImage = None
-
-    if 73 in temp.pred_classes and 0 not in temp.pred_classes:
-        # print("Skip me, go straight to the next step")
-        orig = image.copy()
-        image = imutils.resize(image, width=500)  ## if the image does not have any humans, resize, else dont
-        ratio = orig.shape[1] / float(image.shape[1])
-
-        edged = proj3Helper.getCanPipe(image)
-        corners = proj3Helper.getRect(edged)
-        dst = proj3Helper.fitScreenToRect(image, corners)
-        finalImage, smallBox = proj3Helper.correctPerspectiveAndOrientationGivenCheck(dst)
-    elif 73 in temp.pred_classes and 0 in temp.pred_classes:  # assuming only one book in the image
-        bookmask = np.array(temp.pred_masks[list(temp.pred_classes).index(73)])
-        indices = bookmask.astype(np.uint8)  # convert to an unsigned byte
-        indices *= 255
-        kernel = np.ones((7, 7), np.uint8)
-        img_dilation = cv2.dilate(indices, kernel, iterations=20)
-        approxCorners = getAppxCorner(img_dilation)
-        finalImage = proj3Helper.fitScreenToRect(image, approxCorners)
-    else:  # people in the image, no book segementation :(
-        pass
+def getCheck(image,ogog, templatePath):
+    img, out, classes, isABookMask, isABookAndPersonMask, stillPeopleInThere, mask, reshapedImage = proj3Helper.getDetectronOutput(
+        ogog)
+    if not isABookMask and not isABookAndPersonMask:
+        templatedImage, templateMask = proj3Helper.getTemplate(templatePath, image)
+        img, out, classes, isABookMask, isABookAndPersonMask, stillPeopleInThere, mask, image = proj3Helper.getDetectronOutput(
+            templatedImage, iterations=1)
+        if mask is None:
+            templatedImage2, templateMask = proj3Helper.getTemplate(templatePath, img, scalingFactor=0.95)
+            corners = proj3Helper.approximateCorners(templatedImage2, templateMask)
+            dst = proj3Helper.fitScreenToRect(reshapedImage, corners)
+        elif stillPeopleInThere:
+            templatedImage2, templateMask = proj3Helper.getTemplate(templatePath, img, scalingFactor=0.5)
+            corners = proj3Helper.approximateCorners(templatedImage2, templateMask)
+            dst = proj3Helper.fitScreenToRect(reshapedImage, corners)
+        else:
+            corners = proj3Helper.approximateCorners(img, mask)
+            dst = proj3Helper.fitScreenToRect(reshapedImage, corners)
+    elif isABookAndPersonMask:
+        # print("HI")
+        corners = proj3Helper.approximateCorners(reshapedImage, mask)
+        dst = proj3Helper.fitScreenToRect(reshapedImage, corners)
+    else:
+        edged = proj3Helper.getCanPipe(reshapedImage, eqHist=False)
+        rect = proj3Helper.getRect(edged)
+        dst = proj3Helper.fitScreenToRect(reshapedImage, rect)
+        finImg, smallBox = proj3Helper.correctPerspectiveAndOrientationGivenCheck(dst)
+        dst = finImg
+        # pltshow(finImg)
+    return dst
 
 
-
-def process_img(img_path):
+def process_img(img_path, templatePath):
     frame_orig = cv2.imread(img_path)
-    ### Replace the code below to show only the check and apply transform.
-    frame_result = cv2.cvtColor(frame_orig, cv2.COLOR_BGR2RGB)
+    original = frame_orig.copy()
+    # templatePath = "samples/blankcheck2.jpg"
+
+    fin = getCheck(frame_orig, original, templatePath)
+
+    frame_result = cv2.cvtColor(fin, cv2.COLOR_BGR2RGB)
     ### Replace the code above.
     cv2.imshow("Original", frame_orig)
     cv2.imshow("Result", frame_result)
@@ -144,12 +126,14 @@ def process_img(img_path):
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description="Check prepartion project")
     parser.add_argument('--input_folder', type=str, default='samples', help='check images folder')
+    parser.add_argument("--path_to_template", type = str, default="blankcheck2.jpg")
     
     args = parser.parse_args()
     input_folder = args.input_folder
+    templatePath = args.path_to_template
    
     for check_img in os.listdir(input_folder):
         img_path = os.path.join(input_folder, check_img)
         if img_path.lower().endswith(('.png','.jpg','.jpeg', '.bmp', '.gif', '.tiff')):
-            process_img(img_path)
+            process_img(img_path, templatePath)
             
