@@ -103,7 +103,7 @@ def getCheck(image,ogog, templatePath):
     else:
         edged = proj3Helper.getCanPipe(reshapedImage, eqHist=False)
         rect = proj3Helper.getRect(edged)
-        dst = proj3Helper.fitScreenToRect(reshapedImage, rect)
+        dst = proj3Helper.fitScreenToRect(reshapedImage, rect, dontScale=True)
         finImg, smallBox = proj3Helper.correctPerspectiveAndOrientationGivenCheck(dst)
         dst = finImg
         # pltshow(finImg)
@@ -117,10 +117,10 @@ def process_img(img_path, templatePath):
 
     fin = getCheck(frame_orig, original, templatePath)
 
-    frame_result = cv2.cvtColor(fin, cv2.COLOR_BGR2RGB)
+    # frame_result = cv2.cvtColor(fin, cv2.COLOR_BGR2RGB)
     ### Replace the code above.
     cv2.imshow("Original", frame_orig)
-    cv2.imshow("Result", frame_result)
+    cv2.imshow("Result", fin)
     cv2.waitKey(0)
     
 if __name__=="__main__":

@@ -277,10 +277,10 @@ def correctPerspectiveAndOrientationGivenCheck(dst):
         dst = cv2.rotate(dst, cv2.ROTATE_90_CLOCKWISE)
         dst = cv2.rotate(dst, cv2.ROTATE_90_CLOCKWISE)
         dst = cv2.rotate(dst, cv2.ROTATE_90_CLOCKWISE)
-    return dst, smallCorners
+    return cv2.resize(dst, (600, 300)), smallCorners
 
 
-def fitScreenToRect(image, corners):
+def fitScreenToRect(image, corners, dontScale = False):
     rows, cols, ch = image.shape
     H, W = image.shape[:2]
     pts1 = np.float32(sortCorners(corners))
@@ -289,4 +289,7 @@ def fitScreenToRect(image, corners):
 
     dst = cv2.warpPerspective(image, M, (W, H))
     # dst = cv2.warpPerspective(image,M,(W + (W * 0.5),H))
-    return dst
+    if dontScale:
+        return dst
+    else:
+        return cv2.resize(dst, (600, 300))
