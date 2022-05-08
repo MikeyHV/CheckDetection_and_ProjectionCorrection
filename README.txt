@@ -16,7 +16,7 @@ How to run, 2 arguments:
 	input_folder: the folder that holds the images to be run
 	path_to_template: the path to the template image I used
 
-example run: python proj3.py --input_folder ImagesToTestOn --path_to_template template/blankcheck2.jpg
+example run: python proj3.py --input_folder runMe --path_to_template template/blankcheck2.jpg
 
 (I notice for some reason it quickly exits the final picture of a sequence when running it on a folder, if that happens just put the final picture in a new folder, I apologize.)
 	
