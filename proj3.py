@@ -81,7 +81,15 @@ def getAppxCorner(img_dilation):
 def getCheck(image,ogog, templatePath):
     img, out, classes, isABookMask, isABookAndPersonMask, stillPeopleInThere, mask, reshapedImage = proj3Helper.getDetectronOutput(
         ogog)
-    if not isABookMask and not isABookAndPersonMask:
+    w, h = (ogog.shape[-2], ogog.shape[-3])
+    if stillPeopleInThere and (h / w) > 0.9:
+        kernel = np.ones((3, 3), np.uint8)
+        tempmask = cv2.erode(mask, kernel, iterations=2)
+        newMaskedImage = proj3Helper.subtractMaskFromImg(reshapedImage, tempmask)
+        edged = proj3Helper.getCanPipe(newMaskedImage, eqHist=False)
+        rect = proj3Helper.getRect(edged)
+        dst = proj3Helper.fitScreenToRect(reshapedImage, rect)
+    elif not isABookMask and not isABookAndPersonMask:
         templatedImage, templateMask = proj3Helper.getTemplate(templatePath, image)
         img, out, classes, isABookMask, isABookAndPersonMask, stillPeopleInThere, mask, image = proj3Helper.getDetectronOutput(
             templatedImage, iterations=1)

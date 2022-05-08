@@ -2,8 +2,6 @@ import argparse
 import os
 import pip
 
-
-import pytesseract
 import argparse
 import imutils
 import cv2
@@ -14,7 +12,6 @@ import math
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-from PIL import Image
 
 import detectron2
 from detectron2.utils.logger import setup_logger
@@ -248,14 +245,15 @@ def getDetectronOutput(image, dilateBy=1, iterations=20):
             if currClass == 0 or currClass == 27 or currClass == 58:
                 if indices is None:
                     indices = np.array(i).astype(np.uint8)
-                    indices = indices * 255
+                    # indices = indices*255
                     indices = cv2.dilate(indices, kernel, iterations=1)
                 else:
                     tempmask = np.array(i).astype(np.uint8)
-                    tempmask = tempmask * 255
+                    # tempmask = tempmask*255
                     tempmask = cv2.dilate(tempmask, kernel, iterations=1)
-                    indices = indices + tempmask
+                    indices = cv2.bitwise_or(tempmask, indices)
             cntr += 1
+        indices = indices * 255
         mask = indices
         imagec = subtractMaskFromImg(image, indices)
     # print(imagec, out, temp.pred_classes, isABookMask)
